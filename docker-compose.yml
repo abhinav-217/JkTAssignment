@@ -1,0 +1,40 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: document-management-db
+    restart: always
+    environment:
+      POSTGRES_DB: document_management
+      POSTGRES_USER: document_admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: document-management-app
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - '3000:3000'
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USERNAME: document_admin
+      DB_PASSWORD: admin123
+      DB_DATABASE: document_management
+      JWT_SECRET: change-this-secret
+      CORS_ORIGIN: '*'
+    command: sh -c "npm run migration:run && npm run start:prod"
+
+volumes:
+  pgdata:

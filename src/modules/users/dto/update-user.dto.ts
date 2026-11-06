@@ -1,8 +1,10 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsEmail, IsOptional, IsString, MaxLength } from 'class-validator';
 
-import { UserRole } from '../../../common/enums/user-role.enum';
-
+/**
+ * Admin-only: update a user's name or email.
+ * Role and status changes go through their own dedicated endpoints.
+ */
 export class UpdateUserDto {
   @ApiPropertyOptional({ example: 'Jane Doe' })
   @IsOptional()
@@ -10,13 +12,8 @@ export class UpdateUserDto {
   @MaxLength(100)
   name?: string;
 
-  @ApiPropertyOptional({ enum: UserRole })
+  @ApiPropertyOptional({ example: 'jane.doe@example.com' })
   @IsOptional()
-  @IsEnum(UserRole)
-  role?: UserRole;
-
-  @ApiPropertyOptional({ example: true })
-  @IsOptional()
-  @IsBoolean()
-  isActive?: boolean;
+  @IsEmail()
+  email?: string;
 }

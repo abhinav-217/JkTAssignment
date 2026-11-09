@@ -17,7 +17,31 @@ npm install
 
 ## 2. Create PostgreSQL database
 
-Log in to PostgreSQL as a superuser:
+If your local PostgreSQL install does not have a `postgres` role, this is a common macOS/Homebrew issue. First check your OS username:
+
+```bash
+whoami
+```
+
+Then try connecting with your local username instead of `postgres`:
+
+```bash
+psql -U "$(whoami)" -d postgres
+```
+
+If that still fails, create the `postgres` role manually:
+
+```bash
+createuser -s postgres
+```
+
+If `createuser` is not available, log in to PostgreSQL with your current user or local admin user, then run:
+
+```sql
+CREATE ROLE postgres SUPERUSER LOGIN;
+```
+
+Then log in as the postgres role:
 
 ```bash
 psql -U postgres
@@ -104,5 +128,6 @@ SELECT * FROM roles;
 ## 7. Troubleshooting
 
 - If PostgreSQL rejects the connection, confirm `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, and `DB_DATABASE` are correct.
+- If `psql -U postgres` fails with `role "postgres" does not exist`, your local PostgreSQL install may not have a default `postgres` role. Try connecting as your machine username or create the role manually as shown above.
 - If migrations fail because tables already exist, inspect the current schema and either re-create the database or use a fresh environment.
 - If JWT auth fails, ensure `JWT_SECRET` is set and not blank.

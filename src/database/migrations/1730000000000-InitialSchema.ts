@@ -1,6 +1,13 @@
+import * as bcrypt from 'bcrypt';
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class InitialSchema1730000000000 implements MigrationInterface {
+  private readonly defaultAdmin = {
+    email: 'admin@example.com',
+    name: 'System Admin',
+    password: 'Admin@123',
+  };
+
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       CREATE TYPE "user_role_enum"
@@ -141,9 +148,32 @@ export class InitialSchema1730000000000 implements MigrationInterface {
         ('EDITOR', 'Can upload and manage documents'),
         ('VIEWER', 'Can view documents and ingestion status')
     `);
+
+    await this.createDefaultAdminUser(queryRunner);
+  }
+
+  private async createDefaultAdminUser(queryRunner: QueryRunner): Promise<void> {
+    const hashedPassword = await bcrypt.hash(this.defaultAdmin.password, 10);
+
+    await queryRunner.query(
+      `
+        INSERT INTO "users" ("name", "email", "password_hash", "role_id", "is_active", "created_at", "updated_at")
+        VALUES (
+          $1,
+          $2,
+          $3,
+          (SELECT "id" FROM "roles" WHERE "name" = 'ADMIN'),
+          TRUE,
+          NOW(),
+          NOW()
+        )
+      `,
+      [this.defaultAdmin.name, this.defaultAdmin.email, hashedPassword],
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`DELETE FROM "users" WHERE "email" = 'admin@example.com'`);
     await queryRunner.query(`DROP TABLE "refresh_tokens"`);
     await queryRunner.query(`DROP TABLE "ingestion_jobs"`);
     await queryRunner.query(`DROP TABLE "documents"`);
